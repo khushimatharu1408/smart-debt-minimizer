@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Debt Minimizer Pro</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      text-align: center;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      width: 500px;
+      margin: 40px auto;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin: 8px;
+      border: none;
+      border-radius: 8px;
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    .list {
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .output {
+      background: #f4f6f7;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>💰 Smart Debt Minimizer Pro</h2>
+
+  <button onclick="loadUsers()">Load Sample Users (API)</button>
+  <br>
+
+  <input type="text" id="name" placeholder="Enter Name">
+  <input type="number" id="amount" placeholder="Amount Paid">
+
+  <br>
+  <button onclick="addPerson()">Add Person</button>
+  <button onclick="calculate()">Calculate</button>
+  <button onclick="resetAll()">Reset</button>
+
+  <div class="list" id="list"></div>
+  <div class="output" id="output"></div>
+</div>
+
+<script>
+let people = [];
+let paid = [];
+
+// 🔹 API FUNCTION
+async function loadUsers() {
+  try {
+    let res = await fetch("https://jsonplaceholder.typicode.com/users");
+    let data = await res.json();
+
+    people = [];
+    paid = [];
+
+    document.getElementById("list").innerHTML = "";
+
+    data.slice(0, 3).forEach(user => {
+      let randomAmount = Math.floor(Math.random() * 1000);
+      people.push(user.name);
+      paid.push(randomAmount);
+
+      document.getElementById("list").innerHTML += user.name + " paid ₹" + randomAmount + "<br>";
+    });
+
+    alert("Sample users loaded from API!");
+  } catch (error) {
+    alert("API failed, please enter data manually.");
+  }
+}
+
+// 🔹 ADD MANUAL USER
+function addPerson() {
+  let name = document.getElementById("name").value;
+  let amount = parseFloat(document.getElementById("amount").value);
+
+  if (!name || isNaN(amount)) {
+    alert("Enter valid data");
+    return;
+  }
+
+  people.push(name);
+  paid.push(amount);
+
+  document.getElementById("list").innerHTML += name + " paid ₹" + amount + "<br>";
+
+  document.getElementById("name").value = "";
+  document.getElementById("amount").value = "";
+}
+
+// 🔹 CALCULATE (GREEDY)
+function calculate() {
+  let n = people.length;
+  let total = paid.reduce((a,b) => a+b, 0);
+  let share = total / n;
+
+  let balance = paid.map(p => p - share);
+  let result = "<b>Before Optimization:</b><br>";
+result += "Multiple transactions between users<br>";
+result += "Example: A pays B, B pays C, C pays A<br><br>";
+
+result += "<b>After Optimization:</b><br>";
+
+  while (true) {
+    let maxCreditor = balance.indexOf(Math.max(...balance));
+    let maxDebtor = balance.indexOf(Math.min(...balance));
+
+    if (balance[maxCreditor] === 0 && balance[maxDebtor] === 0) break;
+
+    let amount = Math.min(balance[maxCreditor], -balance[maxDebtor]);
+
+    balance[maxCreditor] -= amount;
+    balance[maxDebtor] += amount;
+
+    result += people[maxDebtor] + " ➝ " + people[maxCreditor] + " : ₹" + amount + "<br>";
+  }
+
+  document.getElementById("output").innerHTML = result;
+}
+
+// 🔹 RESET
+function resetAll() {
+  people = [];
+  paid = [];
+  document.getElementById("list").innerHTML = "";
+  document.getElementById("output").innerHTML = "";
+}
+</script>
+
+</body>
+</html>
